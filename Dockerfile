@@ -1,38 +1,25 @@
 # Galaxy for BRIDGE
 # VERSION       0.2
-FROM bgruening/galaxy-stable:19.05.1
+FROM bgruening/galaxy-stable
 LABEL \
   description="Galaxy BRIDGE" \
-  maintainer="chrisbarnettster@gmail.com, snptha002@myuct.ac.za"
+  maintainer="chrisbarnettster@gmail.com, snptha002@myuct.ac.za, dlskyl001@myuct.ac.za"
 
 ENV GALAXY_CONFIG_BRAND BRIDGE
 
-# Install Tools & Data types
-#ADD bridgetoolbox_tools.yml $GALAXY_ROOT/tools.yaml
-#RUN install-tools $GALAXY_ROOT/tools.yaml && \
-#    /tool_deps/_conda/bin/conda clean --tarballs --yes > /dev/null && \
-#    rm /export/galaxy-central/ -rf && \
-#    mkdir -p $GALAXY_HOME/workflows
-
-
 # --- This section to be removed soon, as tools get added to the Galaxy Toolshed #
 # Install manual tools 
+RUN /tool_deps/_conda/bin/conda install -c conda-forge mamba
+RUN /tool_deps/_conda/bin/mamba create  -y --override-channels --channel kdilsook --channel michellab --channel bioconda --channel r --channel conda-forge --channel anaconda --channel defaults --channel iuc --channel cbarnett --channel omnia --channel psi4 --channel rdkit --channel pytorch --channel bioconda --name __protocaller@1.2.2 protocaller
 WORKDIR /galaxy-central
 COPY BRIDGE /galaxy-central/tools/bridge
-COPY galaxy/config/tool_conf.xml.sample /galaxy-central/tools/bridge/tool_conf.xml
-RUN sed -i '/<toolbox/r /galaxy-central/tools/bridge/tool_conf.xml' /galaxy-central/config/tool_conf.xml.sample
-COPY galaxy/config/datatypes_conf.xml.sample /galaxy-central/config/
-COPY galaxy/lib/binary.py  /galaxy-central/lib/galaxy/datatypes/
-COPY galaxy/lib/molecules.py /galaxy-central/lib/galaxy/datatypes/
-COPY galaxy/config/galaxy.ini.sample /galaxy-central/config/
-COPY galaxy/config/dependency_resolvers_conf.xml /galaxy-central/config/
-ADD  executables /galaxy-central/tools/bridge/md_tools/
+COPY my_tools.xml /galaxy-central/config/tool_conf.xml
+COPY galaxy.yml /galaxy-central/config/galaxy.yml
+#ADD  executables /galaxy-central/tools/bridge/md_tools/
 # Changing the ownership
 RUN chown -R $GALAXY_USER:$GALAXY_USER /galaxy-central/tools/bridge
-RUN chown $GALAXY_USER:$GALAXY_USER /galaxy-central/lib/galaxy/datatypes/binary.py
-RUN chown $GALAXY_USER:$GALAXY_USER /galaxy-central/lib/galaxy/datatypes/molecules.py
-RUN chown $GALAXY_USER:$GALAXY_USER /galaxy-central/config/galaxy.ini.sample
-RUN chown $GALAXY_USER:$GALAXY_USER /galaxy-central/config/dependency_resolvers_conf.xml
+RUN chown $GALAXY_USER:$GALAXY_USER /galaxy-central/config/galaxy.yml
+RUN chown $GALAXY_USER:$GALAXY_USER /export//tool_deps/_conda/bin/mamba
 # ---
 
 # Styling
