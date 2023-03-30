@@ -1,0 +1,48 @@
+<tool id="esp_option1" name="esp_option1" version="@TOOL_VERSION@+galaxy@VERSION_SUFFIX@" profile="20.01">
+    <description>Option 1 ESP</description>
+    <macros>
+        <token name="@TOOL_VERSION@">1.0</token>
+        <token name="@VERSION_SUFFIX@">0</token>
+    </macros>
+    <requirements>
+	<requirement type="package" version="0.0.1">espsim</requirement>
+    </requirements>
+    <command detect_errors="exit_code"><![CDATA[
+            python option_2.py --target '$target_mol' --test '$test_mol' --metric '$metric' &&
+            cp output.txt '$Sim_out' && 
+            cp BestESP.sdf '$esp_out' &&
+            cp BestShape.sdf '$shape_out'
+    ]]></command>
+    <inputs>
+       <param name="target_mol" type="data" format="sdf"/>
+       <param name="test_mol" type="data" format="sdf"/> 
+       <param name="metric" type="select" label="Select Option">
+		<option value="tanimoto">Tanimoto</option>
+		<option value="carbo">Carbo</option>
+	    </param>
+    </inputs>
+    
+    <outputs>
+        <data name="Sim_out" format="txt"/>
+        <data name="esp_out" format="sdf"/>
+        <data name="shape_out" format="sdf"/>
+    </outputs>
+
+    <tests>
+        <test expect_num_outputs="3">
+            <param name="metric" value="tanimoto" />
+            <param name="target_mol" value="target.sdf" />
+            <param name="test_mol" value="data.sdf" />
+            <output name="Sim_out" file="output.txt" ftype="txt" />
+            <output name="esp_out" file="BestESP.sdf" ftype="sdf" />
+            <output name="shape_out" file="BestShape.sdf" ftype="sdf" />
+        </test>
+    </tests>
+    
+    <help><![CDATA[
+        Calculates ESP and shape similarity between two molecules
+    ]]></help>
+    <citations>
+        <citation type="doi">10.1007/s10822-015-9840-9</citation>
+    </citations>
+</tool>
