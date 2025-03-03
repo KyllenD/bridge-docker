@@ -10,8 +10,6 @@ ENV GALAXY_CONFIG_BRAND BRIDGE
 
 # --- This section to be removed soon, as tools get added to the Galaxy Toolshed #
 # Install manual tools 
-RUN /tool_deps/_conda/bin/conda install -c conda-forge mamba
-RUN /tool_deps/_conda/bin/mamba create  -y --override-channels --channel kdilsook --channel michellab --channel bioconda --channel r --channel conda-forge --channel anaconda --channel defaults --channel iuc --channel cbarnett --channel omnia --channel psi4 --channel rdkit --channel pytorch --channel bioconda --name __protocaller@1.2.2 protocaller
 WORKDIR /galaxy-central
 COPY BRIDGE /galaxy-central/tools/bridge
 COPY my_tools.xml /galaxy-central/config/tool_conf.xml
@@ -20,7 +18,6 @@ COPY galaxy.yml /galaxy-central/config/galaxy.yml
 # Changing the ownership
 RUN chown -R $GALAXY_USER:$GALAXY_USER /galaxy-central/tools/bridge
 RUN chown $GALAXY_USER:$GALAXY_USER /galaxy-central/config/galaxy.yml
-RUN chown $GALAXY_USER:$GALAXY_USER /export//tool_deps/_conda/bin/mamba
 # ---
 
 # Styling
