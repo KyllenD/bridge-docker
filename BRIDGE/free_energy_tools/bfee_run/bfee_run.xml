@@ -1,0 +1,130 @@
+<tool id="bfee_run" name="ABFE Run" version="@TOOL_VERSION@+galaxy@VERSION_SUFFIX@">
+    <description>GPU-accelerated geometric absolute binding free energy simulations</description>
+    <macros>
+        <token name="@TOOL_VERSION@">1.0</token>
+        <token name="@VERSION_SUFFIX@">0</token>
+    </macros>
+    <requirements>
+	<requirement type="package" version="*">BFEE2</requirement>
+    </requirements>
+    <command detect_errors="exit_code"><![CDATA[		
+            cp $input_tar ./BFEE.tar &&
+            tar xf BFEE.tar &&
+            cd BFEE &&
+            #if $step_select.step=='0':
+            /cchem/galaxy/local_tools/NAMD/namd3 +p24 000_eq/000.1_eq.conf &>> $log &&
+            echo "Equilibration complete" >> $pmf &&
+            cd 000_eq &&
+            python 000.2_updateCenters.py &&
+            cd ../.. &&
+            #end if 
+            #if $step_select.step=='1':
+            sed -i "s/run    5000000/run $step_select.num_steps/" 001_RMSDBound/001_abf_1.conf &&
+            /cchem/galaxy/local_tools/NAMD/namd3 +p24 001_RMSDBound/001_abf_1.conf 2>&1 &&
+            cat 001_RMSDBound/output/abf_1.abf1.czar.pmf >> $pmf &&
+            cat 001_RMSDBound/output/abf_1.abf1.hist.czar.pmf >> $log &&
+            cd .. &&
+            #end if
+            #if $step_select.step=='2':
+            /cchem/galaxy/local_tools/NAMD/namd3 +p24 002_EulerTheta/002_abf_1.conf &>> $log 2>&1 &&
+            cat 002_EulerTheta/output/abf_1.abf1.czar.pmf >> $pmf &&
+            cd .. &&
+            #end if
+            #if $step_select.step=='3':
+            /cchem/galaxy/local_tools/NAMD/namd3 +p$24 003_EulerPhi/003_abf_1.conf &>> $log 2>&1 &&
+            cat 003_EulerPhi/output/abf_1.abf1.czar.pmf >> $pmf &&
+            cd .. &&
+            #end if
+            #if $step_select.step=='4':
+            /cchem/galaxy/local_tools/NAMD/namd3 +p24 004_EulerPsi/004_abf_1.conf &>> $log 2>&1 &&
+            cat 004_EulerPsi/output/abf_1.abf1.czar.pmf >> $pmf &&
+            cd .. &&
+            #end if
+            #if $step_select.step=='5':
+            /cchem/galaxy/local_tools/NAMD/namd3 +p24 005_PolarTheta/005_abf_1.conf &>> $log 2>&1 &&
+            cat 005_PolarTheta/output/abf_1.abf1.czar.pmf >> $pmf &&
+            cd .. &&
+            #end if
+            #if $step_select.step=='6':
+            /cchem/galaxy/local_tools/NAMD/namd3 +p24 006_PolarPhi/006_abf_1.conf &>> $log 2>&1 &&
+            cat 006_PolarPhi/output/abf_1.abf1.czar.pmf >> $pmf &&
+            cd .. &&
+            #end if
+            #if $step_select.step=='7.1':
+            /cchem/galaxy/local_tools/NAMD/namd3 +p24 007_r/007.1_eq.conf &>> $log 2>&1 &&
+            echo "Equilibration of larger system complete" >> $pmf &&
+            cd .. &&
+            #end if
+
+             #if $step_select.step=='7.2':
+            /cchem/galaxy/local_tools/NAMD/namd3 +p24 007_r/007.2_abf_1.conf &>> $log 2>&1 &&
+            cat 007_r/output/abf_1.abf1.czar.pmf >> $pmf &&
+            cd .. &&
+            #end if
+
+            #if $step_select.step=='8':
+            /cchem/galaxy/local_tools/NAMD/namd3 +p24 008_RMSDUnbound/008.1_eq.conf &>> $log 2>&1 &&
+            /cchem/galaxy/local_tools/NAMD/namd3 +p24 008_RMSDUnbound/008.2_abf_1.conf &>> $log 2>&1 &&
+            cat 008_RMSDUnbound/output/abf_1.abf1.czar.pmf >> $pmf &&
+            cd .. &&
+            #end if 
+            tar cf BFEE_output.tar BFEE &&
+            cp BFEE_output.tar $tar_out 
+    ]]></command>
+    <inputs>
+       <param name="input_tar" type="data" format="tar" label="Input tar containing BFEE inputs"/>
+       <conditional name="step_select">
+       <param name="step" type="select" label="Step to run">
+          <option value="0">Equilibration</option>
+          <option value="1">Step 1 - Bound RMSD</option>
+          <option value="2">Step 2 - Euler Theta</option>
+          <option value="3">Step 3 - Euler Phi</option>
+          <option value="4">Step 4 - Euler Psi</option>
+          <option value="5">Step 5 - Polar Theta</option>
+          <option value="6">Step 6 - Polar Phi</option>
+          <option value="7.1">Step 7.1 - Distnace equilibration</option>
+          <option value="7.2">Step 7.2 - Distance simulation</option>
+          <option value="8">Step 8 - Unbound RMSD </option>
+       </param>
+       <when value="1">
+       <param name="num_steps" type="text" label="Number of steps" value="5000000"/>
+       </when>
+       </conditional>
+    </inputs>
+    <outputs>
+        <data name="tar_out" format="tar" label="ABFE Run: Step $step_select.step Output .tar"/>
+        <data name="log" format="txt" label="ABFE Run: Step $step_select.step Log/Histogram file"/>
+        <data name="pmf" format="txt" label="ABFE Run: Step $step_select.step PMF"/>
+    </outputs>
+    <tests>
+    </tests>
+    <help><![CDATA[
+.. class:: infomark
+
+**What this tool does:**
+
+This tool performs Geometrical ABFE simulations using the NAMD3 MD engien utilizing 24 CPU cores and 1 GPU. The ABFE simulation consists of an equilibration step followed by 8 independent steps. Users are encouraged to run a single step at a time to ensure fair usage of the GPU resources.
+
+.. class:: infomark
+
+**Inputs:**
+
+* Tar file containing BFEE inputs generated by the ABFE setup tool (https://galaxy-compchem.ilifu.ac.za/tool_runner?tool_id=bfee_NAMD_geometric) 
+
+* Step to run - which restraint based collective variable simulation to carry out.
+
+.. class:: infomark
+
+**Output:**
+
+* Tar file containing the outputs of the ABFE simulation step. 
+
+* The 1D PMF along the selected CV
+
+* A histogram pmf file 
+ 
+
+    ]]></help>
+    <citations>
+    </citations>
+</tool>

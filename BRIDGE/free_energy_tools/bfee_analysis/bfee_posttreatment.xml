@@ -1,0 +1,86 @@
+<tool id="bfee_post_treatment" name="ABFE Analysis" version="@TOOL_VERSION@+galaxy@VERSION_SUFFIX@">
+    <description>of geometric absolute binding free energy simulations</description>
+    <macros>
+        <token name="@TOOL_VERSION@">1.0</token>
+        <token name="@VERSION_SUFFIX@">0</token>
+    </macros>
+    <requirements>
+	<requirement type="package" version="*">BFEE2</requirement>
+    </requirements>
+    <command detect_errors="exit_code"><![CDATA[		
+            cp $pmf1 ./pmf1 &&
+            cp $pmf2 ./pmf2 &&
+            cp $pmf3 ./pmf3 &&
+            cp $pmf4 ./pmf4 &&
+            cp $pmf5 ./pmf5 &&
+            cp $pmf6 ./pmf6 &&
+            cp $pmf7 ./pmf7 &&
+            cp $pmf8 ./pmf8 &&
+            #if $conv_check.conv_plot=="yes":
+            python '$__tool_directory__'/post_treatment.py --MDengine namd --temp $temp >> $output &&
+            python '$__tool_directory__'/plot_convergnce.py --hist '$conv_check.histfile' &&
+            cp rmsd.png '$plot'
+            #end if
+            #if $conv_check.conv_plot=="no":
+            python '$__tool_directory__'/post_treatment.py --MDengine namd --temp $temp >> $output
+            #end if
+
+    ]]></command>
+    <inputs>
+       <param name="pmf1" type="data" format="txt" label="Bound RMSD .czar.pmf"/>
+       <param name="pmf2" type="data" format="txt" label="Euler Theta .czar.pmf"/>
+       <param name="pmf3" type="data" format="txt" label="Euler Phi .czar.pmf"/>
+       <param name="pmf4" type="data" format="txt" label="Euler Psi .czar.pmf"/>
+       <param name="pmf5" type="data" format="txt" label="Polar Theta .czar.pmf"/>
+       <param name="pmf6" type="data" format="txt" label="Polar Phi .czar.pmf"/>
+       <param name="pmf7" type="data" format="txt" label="Distance (r) .czar.pmf"/>
+       <param name="pmf8" type="data" format="txt" label="Unbound RMSD .czar.pmf"/>
+       <param name="temp" type="text" label="Temperature" value="300"/> 
+    <conditional name="conv_check">
+    <param name="conv_plot" type="select" label="Check RMSD convergence">
+    <option value="yes">Yes</option>
+    <option value="no">No</option>
+    </param>
+    <when value="yes">
+    <param name="histfile" type="data" label="Bound RMSD .hist.czar.pmf file"/>
+    </when>
+    <when value="no">
+    </when>
+    </conditional>
+    </inputs>
+    <outputs>
+        <data name="output" format="txt"/>
+        <data name="plot" format="png"/>
+    </outputs>
+    <tests>
+    </tests>
+    <help><![CDATA[
+
+.. class:: infomark
+
+**What this tool does:**
+      
+Carries out analysis of 8 1D pmfs produced from running restraint-based free-energy simulations to calculate the Binding Free energy of a protein-ligand system. Users also have the option to plot the convergence of the Bound RMSD step using the out histogram file.
+
+.. class:: infomark
+
+**Inputs:**
+
+* The PMF for each ABFE simulation
+
+* Temperature 
+
+* Bound RMSD (Step 1) histogram file if a convergence check is requested 
+
+.. class:: infomark
+
+**Output:**
+
+* A result file
+
+* A plot of RMSD convergence if a convergence check is requested
+
+    ]]></help>
+    <citations>
+    </citations>
+</tool>
