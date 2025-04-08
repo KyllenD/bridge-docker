@@ -1,0 +1,54 @@
+<tool id="parmed_gmx2amber" name="Gromacs2Amber" version="1.0">
+  <description>Converts Gromacs files to Amber format</description>
+   <macros>
+        <token name="@TOOL_VERSION@">1.0</token>
+        <token name="@VERSION_SUFFIX@">0</token>
+   </macros>
+  <requirements>
+    <requirement type="package" version="22.0">ambertools</requirement>
+  </requirements>
+  <command detect_errors="exit_code"><![CDATA[ 
+
+  cp -r '$__tool_directory__'/amber14sb_OL15.ff . &&
+  ln -s $top ./input.top &&
+  ln -s $gro ./input.gro &&
+  (echo gromber input.top input.gro ;  echo outparm output.parm7 ; echo writeCoordinates output.rst7; echo quit)| parmed &&
+  cp output.parm7 '$parm' &&
+  cp output.rst7 '$rst' 
+
+  ]]></command>
+    <inputs>
+       <param name="gro" type="data" label="Gromacs coordinates"/>
+       <param name="top" type="data" label="Gromacs topology"/> 
+    </inputs>
+    <outputs>
+        <data name="rst" format="txt" label="Converted .rst7"/>
+        <data name="parm" format="txt" label="Converted .parm7"/>
+    </outputs>
+    <tests>
+    </tests>
+    <help><![CDATA[
+.. class:: infomark
+
+**What this tool does:**
+
+Converts Gromacs coordinate and topology files to Amber format files using Parmed.
+
+.. class:: infomark
+
+**Inputs:**
+
+- Gromacs coordinate file (.gro)
+- Gromacs topology file (.top)
+
+.. class:: infomark
+
+**Outputs created**
+
+- Amber coordinate file (.rst7)
+- Amber topology file (.parm7)
+
+    ]]></help>
+    <citations>
+    </citations>
+</tool>

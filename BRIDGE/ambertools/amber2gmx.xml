@@ -1,0 +1,55 @@
+<tool id="parmed_amber2gmx" name="Amber2Gromacs" version="1.0">
+  <description>Converts Amber files to Gromacs format</description>
+   <macros>
+        <token name="@TOOL_VERSION@">1.0</token>
+        <token name="@VERSION_SUFFIX@">0</token>
+   </macros>
+  <requirements>
+    <requirement type="package" version="22.0">ambertools</requirement>
+  </requirements>
+  <command detect_errors="exit_code"><![CDATA[ 
+
+  ln -s '$__tool_directory__'/amber2gmx.py . &&
+  python3.10 amber2gmx.py --coord "$rst7" --topol "$parm7" && 
+  cp output.gro '$gro' &&
+  cp output.top '$top' &&
+  cp output.itp '$itp' 
+
+  ]]></command>
+    <inputs>
+       <param name="rst7" type="data" label="Amber .rst7"/>
+       <param name="parm7" type="data" label="Amber .parm7"/> 
+    </inputs>
+    <outputs>
+        <data name="gro" format="gro" label="Converted .gro"/>
+        <data name="top" format="top" label="Converted .top"/>
+        <data name="itp" format="itp" label="Converted .itp"/>
+    </outputs>
+    <tests>
+    </tests>
+    <help><![CDATA[
+.. class:: infomark
+
+**What this tool does:**
+
+Converts Amber coordinate and topology files to Gromacs format files using Parmed.
+
+.. class:: infomark
+
+**Inputs:**
+
+- Amber coordinate file (.rst7)
+- Amber topology file (.parm7)
+
+.. class:: infomark
+
+**Outputs created**
+
+- Gromacs coordinate file (.gro)
+- Gromacs topology file (.top)
+- Reduced Gromacs topoogy file (.itp) for merging with other topology files.
+
+    ]]></help>
+    <citations>
+    </citations>
+</tool>
