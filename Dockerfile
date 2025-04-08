@@ -30,7 +30,7 @@ COPY galaxy/config/dependency_resolvers_conf.xml /galaxy-central/config/
 ADD  executables /galaxy-central/tools/bridge/md_tools/
 ADD  libstdc++.so.6 /usr/lib/x86_64-linux-gnu/libstdc++.so.6
 #ADD  __espsim@0.0.1 /tool_deps/_conda/envs/__espsim@0.0.1
-#RUN /tool_deps/_conda/bin/conda create --name __openbabel@2.4.1 -c conda-forge openbabel=2.4.1 -y
+RUN /tool_deps/_conda/bin/conda create --name __openbabel@2.4.1 -c conda-forge openbabel=2.4.1 -y
 # Changing the ownership
 RUN chown -R $GALAXY_USER:$GALAXY_USER /galaxy-central/tools/bridge
 RUN chown $GALAXY_USER:$GALAXY_USER /galaxy-central/lib/galaxy/datatypes/binary.py
