@@ -1,0 +1,48 @@
+<tool id="autodock_extract" name="Extract AUTODOCK poses" version="@TOOL_VERSION@+galaxy@VERSION_SUFFIX@">
+    <description></description>
+    <macros>
+        <token name="@TOOL_VERSION@">1.0</token>
+        <token name="@VERSION_SUFFIX@">0</token>
+    </macros>
+    <requirements>
+         <requirement type="package" version="2.4.1">openbabel</requirement>
+    </requirements>
+    <command detect_errors="exit_code"><![CDATA[		
+            bash '$__tool_directory__'/dlgtopdb.sh $in_mol &&
+            bash '$__tool_directory__'/dlgtosdf.sh $in_mol &&
+            cat dock.*.sdf >> dockedligands.sdf &&
+            cp dockedligands.sdf '$sdf_out' &&
+            rm dock.*.sdf && 
+            bash '$__tool_directory__'/dlgtocomplex.sh $receptor &&
+            mkdir ligands complexes &&
+            mv dock.*.pdb ligands/ &&
+            mv complex_*.pdb complexes/ && 
+            tar cf complexes.tar complexes/ &&
+            tar cf ligands.tar ligands/ &&
+            cp '$summary' RESULTS.txt &&
+            bash '$__tool_directory__'/extract.sh &&
+            cp topcomplex.pdb '$top_complex' &&
+            cp topligand.pdb '$top_ligand' &&
+            cp complexes.tar '$tar_complex' &&
+            cp ligands.tar '$tar_ligand' 
+    ]]></command>
+    <inputs>
+       <param name="in_mol" type="data" label="Input .dlg"/>
+       <param name="summary" type="data" format="txt" label="Summary file of docking scores per pose"/>
+       <param name="receptor" type="data" label="Receptor .pdb"/>
+    </inputs>
+    <outputs>
+        <data name="sdf_out" format="sdf"/>
+        <data name="top_complex" format="pdb"/>
+        <data name="top_ligand" format="pdb"/>
+        <data name="tar_complex" format="tar"/>
+        <data name="tar_ligand" format="tar"/>
+    </outputs>
+    <tests>
+    </tests>
+    <help><![CDATA[
+        This tool extracts poses from the dlg file produced by AUTODOCK-GPU and creates the docked complex. The lowest energy complex and ligand are output and all other poses and complexes are returned in a .tar folder.
+    ]]></help>
+    <citations>
+    </citations>
+</tool>

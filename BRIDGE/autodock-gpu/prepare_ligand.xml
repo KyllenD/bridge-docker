@@ -1,0 +1,61 @@
+<tool id="prepare_ligand" name="Prepare AUTODOCK ligand" version="@TOOL_VERSION@+galaxy@GALAXY_VERSION@">
+    <macros>
+        <token name="@TOOL_VERSION@">1.5.7</token>
+        <token name="@GALAXY_VERSION@">0</token>
+    </macros>
+    <description></description>
+    <requirements>
+        <requirement type="package" version="@TOOL_VERSION@">mgltools</requirement>
+    </requirements>
+    <stdio>
+        <exit_code range="1" />
+    </stdio>
+    <command><![CDATA[
+        ln -s '$__tool_directory__'/prepare_multiple_ligands.sh . &&
+        ln -s $ligand ./ligand.mol2 && 
+        bash prepare_multiple_ligands.sh $cleanup &&
+        cat *.pdbqt > "$file_output" 
+    ]]></command>
+    <inputs>
+<param type="data" name="ligand" format="mol2" label="Ligand in .mol2/.sdf format" />
+        <param name="cleanup" type="select" label="Cleanup options">
+                <option value="''">None</option>
+		<option value="nphs_lps">Non-polar Hydrogens and Lone pairs</option>
+		<option value="nphs">Non-polar Hydrogens only</option>
+		<option value="lps">Lone pairs only</option>
+             </param>
+    </inputs>
+    <outputs>
+        <data name="file_output" format="pdbqt" />
+    </outputs>
+    <tests>
+    </tests>
+    <help><![CDATA[
+
+.. class:: infomark
+
+**What this tool does:**
+
+This tool uses the MGLTools programming package to convert a mol2 molecule file to a pdbqt molecule file, which the Autodock Vina program uses to perform molecular docking. The output file has a similar format to the pdb input, with atom types modified to conform to AutoDock atom types and an extra column containing Gasteiger charges added. Additional clean up options were added which allows the removal of non-polar hydrogens and/or lone pairs or neither from the ligand.
+
+-----
+
+.. class:: infomark
+
+**Inputs:**
+
+* Ligand - A .mol2 file is required to use this tool. .sdf files can be used as inputs but are converted interally into .mol2 files.
+
+* Cleanup option - select which atom types to remove from the ligand.
+
+.. class:: infomark
+
+**Output:**
+
+* A .pdbqt molecule file for use in AUTODOCK docking.
+
+    ]]></help>
+    <citations>
+        <citation type="doi">10.1002/jcc.21334</citation>
+    </citations>
+</tool>

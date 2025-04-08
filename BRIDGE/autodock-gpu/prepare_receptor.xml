@@ -1,0 +1,51 @@
+<tool id="prepare_receptor" name="Prepare AUTODOCK4 receptor" version="@TOOL_VERSION@+galaxy@GALAXY_VERSION@">
+    <macros>
+        <token name="@TOOL_VERSION@">1.5.7</token>
+        <token name="@GALAXY_VERSION@">0</token>
+    </macros>
+    <description></description>
+    <requirements>
+        <requirement type="package" version="1.5.7">mgltools</requirement>
+        <requirement type="package" version="*">autogrid</requirement>
+    </requirements>
+    <stdio>
+        <exit_code range="1" />
+    </stdio>
+    <command><![CDATA[
+        cp $__tool_directory__/prepare_gpf.py . &&
+        ln -s $receptor ./receptor.pdb && 
+        ln -s $ligand ./ligand.pdb &&
+        prepare_ligand4.py -l ./ligand.pdb -v -o ./ligand.pdbqt -U '' &&
+        prepare_receptor4.py -r ./receptor.pdb -o ./receptor.pdbqt -v -U '' &&
+        pythonsh prepare_gpf.py -l ligand.pdbqt -r ./receptor.pdbqt -y  -p ligand_types='A,C,H,OA,N,P,NA,HD,F,Cl,Br,S,SA,I' &&
+        autogrid4 -p receptor.gpf -l receptor.glg &&
+        mkdir maps && 
+        mv receptor.*.map maps/ && 
+        mv receptor.maps.* maps/ && 
+        mv receptor.glg maps/ && 
+        mv receptor.gpf maps/ &&
+        tar cf maps.tar maps/ && 
+        cp maps.tar $maps_tar 
+    ]]></command>
+    <inputs>
+        <param type="data" name="receptor" format="pdb" label="Receptor PDB" />
+        <param type="data" name="ligand" format="pdb" label="Bound ligand PDB (aligned to the receptor)" />
+    </inputs>
+    <outputs>
+        <data name="maps_tar" format="tar" />
+    </outputs>
+    <tests>
+    </tests>
+    <help><![CDATA[
+
+.. class:: infomark
+
+**What this tool does:**
+
+Generates affinity grid using Autogrid4 for docking with AUTODOCK4. This tool requires a bound ligand around which the affinity map will be centred.
+
+      ]]></help>
+    <citations>
+    <citation type="doi"> 10.1002/jcc.21256 </citation>
+    </citations>
+</tool>
