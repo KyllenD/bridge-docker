@@ -30,6 +30,7 @@ curl "https://hub.docker.com/v2/repositories/scientificomputing/bridge/tags?page
 ## Quick start with custom Galaxy Docker
 - Build: `docker build -t bridge .`
 - Run: `docker run -d -p 8080:80 --rm bridge` # the --rm flag will automatically remove the container when it exits
+- To run with GPU: `docker run --gpus all --runtime='nvidia' -v /usr/local/cuda:/usr/local/cuda -d -p 8080:80 bridge`
 - Use: Open your web browser on http://localhost:8080
 
 ## Further information
