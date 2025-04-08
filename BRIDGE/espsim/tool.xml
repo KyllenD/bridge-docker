@@ -1,0 +1,77 @@
+<tool id="ls_align" name="LS align" version="@TOOL_VERSION@+galaxy@VERSION_SUFFIX@">
+    <description>flexible ligand alignment</description>
+    <macros>
+        <token name="@TOOL_VERSION@">1.0</token>
+        <token name="@VERSION_SUFFIX@">0</token>
+    </macros>
+    <requirements>
+        <requirement type="package" version="2.4.1">openbabel</requirement>
+    </requirements>
+    <command ><![CDATA[
+            cp '$test_mol' query.sdf &&
+            cp '$target_mol' target.sdf &&
+            cp '$__tool_directory__'/LSalign . &&
+            cp '$__tool_directory__'/run.py . &&
+            cp '$__tool_directory__'/run.sh . &&
+            bash run.sh >> '$log_out' &&
+            cp aligned.sdf '$sdf_out'
+    ]]></command>
+    <inputs>
+       <param name="target_mol" type="data" format="sdf" label="Target"/>
+       <param name="test_mol" type="data" format="sdf" label="Query molecule / database"/>
+    </inputs>
+    <outputs>
+        <data name="log_out" format="txt"/>
+        <data name="sdf_out" format="sdf"/>
+    </outputs>
+    <tests>
+    </tests>
+ <help><![CDATA[
+        .. class:: infomark
+
+        **What this tool does:**
+
+        Determines the similarity between molecules based on their MAP4 fingerprints. The distance from the target is calculated, the clostest neighbour being the most similar molecule. Distances are calculated using a custom kernel/loss function suggested by the initial developers (see citation).
+
+         .. class:: infomark
+
+         **Inputs:**
+
+         * Target - coordinate file as .mol2 (single molecule)
+
+         * Query - coordinate file as .mol2 (single .mol2 file containing one or more molecules)
+
+
+         .. class:: infomark
+
+
+         **Outputs:**
+
+         * A .sdf file containing the top hits as determined by the "Number of top hits to extract" field
+
+         * A .csv file conatining the name of the Query molecule, and the calculated distance of the Query from target ranging from 0-1.
+
+        .. class:: infomark
+
+         **Note:**
+
+* By default a 1024 bit hash with radius 2 is used to generate the MAP4 molecular fingerprint.
+
+* Molecules should contain the correct bond orders and protonation states. Steroechemical information is not necessary as this information is removed in the process of calculating the MAP4 fingerprint.
+
+* By default this tool submits jobs to a compute node which makes use of 16 cores and has a walltime of 72hrs.
+
+    ]]></help>
+    <citations>
+    <citation type="bibtex">
+@article{capecchi_one_2020,
+        title = {One molecular fingerprint to rule them all: drugs, biomolecules, and the metabolome},
+        volume = {12},
+        issn = {1758-2946},
+        shorttitle = {One molecular fingerprint to rule them all},
+        url = {https://jcheminf.biomedcentral.com/articles/10.1186/s13321-020-00445-4},
+        doi = {10.1186/s13321-020-00445-4},
+}
+</citation>
+    </citations>
+</tool>

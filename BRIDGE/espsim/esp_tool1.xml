@@ -1,5 +1,5 @@
-<tool id="esp_option1" name="esp_option1" version="@TOOL_VERSION@+galaxy@VERSION_SUFFIX@" profile="20.01">
-    <description>Option 1 ESP</description>
+<tool id="esp_sim" name="ESP-Shape Similarity tool" version="@TOOL_VERSION@+galaxy@VERSION_SUFFIX@">
+    <description></description>
     <macros>
         <token name="@TOOL_VERSION@">1.0</token>
         <token name="@VERSION_SUFFIX@">0</token>
@@ -7,42 +7,179 @@
     <requirements>
 	<requirement type="package" version="0.0.1">espsim</requirement>
     </requirements>
-    <command detect_errors="exit_code"><![CDATA[
-            python option_2.py --target '$target_mol' --test '$test_mol' --metric '$metric' &&
-            cp output.txt '$Sim_out' && 
-            cp BestESP.sdf '$esp_out' &&
-            cp BestShape.sdf '$shape_out'
+    <command detect_errors="exit_code"><![CDATA[		
+
+            #if $align == "flex"
+            cp '$__tool_directory__'/LSalign . &&
+            cp '$__tool_directory__'/run_lsalign.py . &&
+            cp '$__tool_directory__'/run_lsalign.sh . &&
+            cp '$__tool_directory__'/no_align.py . &&
+            ln -s '$target_mol' target.sdf &&
+            ln -s '$test_mol' query.sdf &&
+            bash run_lsalign.sh &&
+            cat '$target_mol' aligned.sdf > database.sdf &&
+            python3 '$__tool_directory__'/no_align.py --target database.sdf --metric '$metric' --chargemethod '$chargemethod' --sort '$sortmethod' --sanitize False --outfile '$Sim_out' 2>&1 &&
+            #end if
+
+            #if $align == "rigid_rdkit"
+            cat '$target_mol' '$test_mol' > database.sdf &&
+            python3 '$__tool_directory__'/option_5.py --target database.sdf  --metric '$metric' --chargemethod '$chargemethod' --sort '$sortmethod' --sanitize True --outfile '$Sim_out' 2>&1 && 
+            #end if 
+
+            #if $align == "rigid_ls"
+            ln -s '$target_mol' target.sdf &&
+            ln -s '$test_mol' query.sdf &&
+            cp '$__tool_directory__'/no_align.py . &&
+            cp '$__tool_directory__'/LSalign . &&
+            cp '$__tool_directory__'/run_lsalign_rigid.py . &&
+            cp '$__tool_directory__'/run_lsalign_rigid.sh . &&
+            bash run_lsalign_rigid.sh &&
+            cat '$target_mol' aligned.sdf > database.sdf && 
+            python3 '$__tool_directory__'/no_align.py --target database.sdf --metric '$metric' --chargemethod '$chargemethod' --sort '$sortmethod' --sanitize False --outfile '$Sim_out' 2>&1 &&
+            #end if
+
+            cp sorted.csv '$Sim_out' &&
+            cp $__tool_directory__/list.sh . &&
+            cp $__tool_directory__/extract_sdf_by_name.py . &&
+            #if $extraction.extract=="yes"
+            bash list.sh $extraction.num &&
+            python3 extract_sdf_by_name.py --database database.sdf --output $sdf_out 
+            #else 
+            touch Extracted.sdf &&
+            cp Extracted.sdf '$sdf_out'
+            #end if
+ 
     ]]></command>
     <inputs>
-       <param name="target_mol" type="data" format="sdf"/>
-       <param name="test_mol" type="data" format="sdf"/> 
-       <param name="metric" type="select" label="Select Option">
+       <param name="target_mol" type="data" format="sdf" label="Target"/>
+       <param name="test_mol" type="data" format="sdf" label="Query molecule / database"/> 
+       <param name="chargemethod" type="select" label="Charge method">
+                <option value="espaloma">EspalomaCharge</option>
+                <option value="gasteiger">Gasteiger</option>
+                <option value="mmff">MMFF94</option>
+             </param>
+       <param name="metric" type="select" label="Similarity metric">
 		<option value="tanimoto">Tanimoto</option>
 		<option value="carbo">Carbo</option>
 	    </param>
+       <param name="align" type="select" label="Alignment method">
+                <option value="rigid_rdkit">Rigid (RDKit Crippen Alignment)</option>
+                <option value="rigid_ls">Rigid (LS-Align)</option>
+                <option value="flex">Flexible (LS-Align)</option>
+            </param>
+       <param name="sanitize" type="select" label="Minimize input structures?">
+                <option value="True">Yes</option>
+                <option value="False">No</option>
+            </param>
+       <param name="sortmethod" type="select" label="Sort output by">
+                <option value="ESP*Shape">ESP*Shape similarity</option>
+                <option value="ESP">ESP similarity</option>
+                <option value="Shape">Shape similarity</option>
+            </param>
+       <conditional name="extraction">
+            <param type="select" name="extract" label="Extract top molecues?">
+          <option value="yes">Yes</option>
+          <option value="no">No</option>
+            </param>
+           <when value="yes">
+            <param name="num" type="text" label="Number of top hits to extract" value="10"/>
+            </when>
+          </conditional>
     </inputs>
-    
     <outputs>
-        <data name="Sim_out" format="txt"/>
-        <data name="esp_out" format="sdf"/>
-        <data name="shape_out" format="sdf"/>
+        <data name="Sim_out" format="csv" label="ESP-Shape similarity screening results"/>
+        <data name="sdf_out" format="sdf" label="SDF output of ESP-Shape similarity search"/>
     </outputs>
-
     <tests>
-        <test expect_num_outputs="3">
-            <param name="metric" value="tanimoto" />
-            <param name="target_mol" value="target.sdf" />
-            <param name="test_mol" value="data.sdf" />
-            <output name="Sim_out" file="output.txt" ftype="txt" />
-            <output name="esp_out" file="BestESP.sdf" ftype="sdf" />
-            <output name="shape_out" file="BestShape.sdf" ftype="sdf" />
-        </test>
     </tests>
-    
     <help><![CDATA[
-        Calculates ESP and shape similarity between two molecules
+        .. class:: infomark
+
+        **What this tool does:**
+
+        Calculates ESP and 3D shape similarity between two molecules. Queries are aligned to the target using the Open3DAlign function of RDKit, aligning molecules based on their partition coefficient (log P) and molar refractivity (MR). The Shape similarity is then determined by the overlap of the vdW radii. For ESP similarity, partial charges of both moelcules are calculated by the selcted method and compared using either the Tanimoto or Carbo metrices. Alignment of the query to the target can be flexible or rigid. Rigid alignment uses the Open3DAlign function of RDKit, aligning molecules based on their partition coefficient (log P) and molar refractivity (MR). Flexible alignment is carried out using LS-Align.
+         
+         .. class:: infomark
+         
+         **Inputs:**
+
+         * Target - coordinate file as .sdf (single molecule)
+
+         * Query - coordinate file as .sdf (single .sdf file containing one or more molecules)
+         
+         * Charge method - method used to calculate the partial charges used in ESP similarity calculation(Gasteiger/MMFF94/EspalomaCharge)
+
+         * Similartiy metric - metric used to calculate ESP similarity (Tanimoto/Carbo)
+
+         * Alignment method - rigid/ flexible
+
+         * Minimize input structures - choose whether to minimize inputs using RDKit UFF 
+ 
+         * Sort output by - select whether to rank the output molecules based on their ESP,Shape or ESP*Shape similarity to the target 
+
+         * Number of top hits to extract - number of molecules to extract as a combined .sdf file based on the sorted output 
+
+         .. class:: infomark
+         
+         **Outputs:**
+
+         * A .sdf file containing the top hits as determined by the "Number of top hits to extract" field
+
+         * A .csv file conatining the name of the Query molecule, the ESP similarity, Shape similarity and the product of these similarites (ESP*Shape Similarity).
+
+        .. class:: infomark
+
+         **Note:**
+         
+* Molecules should contain the correct bond orders and protonation states.
+
+* By default this tool submits jobs to a compute node which makes use of 16 cores and has a walltime of 72hrs.
+
+
     ]]></help>
     <citations>
-        <citation type="doi">10.1007/s10822-015-9840-9</citation>
+    <citation type="bibtex">
+@article{doi:10.1021/acs.jcim.1c01535,
+author = {Bolcato, Giovanni and Heid, Esther and Boström, Jonas},
+title = {On the Value of Using 3D Shape and Electrostatic Similarities in Deep Generative Methods},
+journal = {Journal of Chemical Information and Modeling},
+volume = {62},
+number = {6},
+pages = {1388-1398},
+year = {2022},
+doi = {10.1021/acs.jcim.1c01535},
+note ={PMID: 35271260},
+}
+</citation>
+<citation type="bibtex">
+@article{doi:10.1021/acs.jpca.4c01287,
+author = {Wang, Yuanqing and Pulido, Iván and Takaba, Kenichiro and Kaminow, Benjamin and Scheen, Jenke and Wang, Lily and Chodera, John D.},
+title = {EspalomaCharge: Machine Learning-Enabled Ultrafast Partial Charge Assignment},
+journal = {The Journal of Physical Chemistry A},
+volume = {128},
+number = {20},
+pages = {4160-4167},
+year = {2024},
+doi = {10.1021/acs.jpca.4c01287},
+note ={PMID: 38717302},
+}
+</citation>
+<citation type="bibtex">
+@article{10.1093/bioinformatics/bty081,
+    author = {Hu, Jun and Liu, Zi and Yu, Dong-Jun and Zhang, Yang},
+    title = {LS-align: an atom-level, flexible ligand structural alignment algorithm for high-throughput virtual screening},
+    journal = {Bioinformatics},
+    volume = {34},
+    number = {13},
+    pages = {2209-2218},
+    year = {2018},
+    month = {02},
+    issn = {1367-4803},
+    doi = {10.1093/bioinformatics/bty081},
+    url = {https://doi.org/10.1093/bioinformatics/bty081},
+    eprint = {https://academic.oup.com/bioinformatics/article-pdf/34/13/2209/50316014/bioinformatics\_34\_13\_2209.pdf},
+}
+</citation>
+
     </citations>
 </tool>

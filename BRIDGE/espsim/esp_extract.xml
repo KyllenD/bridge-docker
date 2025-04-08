@@ -1,0 +1,51 @@
+<tool id="esp_extract" name="Extract SDF" version="@TOOL_VERSION@+galaxy@VERSION_SUFFIX@">
+    <description>from a database by name</description>
+    <macros>
+        <token name="@TOOL_VERSION@">1.0</token>
+        <token name="@VERSION_SUFFIX@">0</token>
+    </macros>
+    <requirements>
+	<requirement type="package" version="0.0.1">espsim</requirement>
+    </requirements>
+    <command detect_errors="exit_code"><![CDATA[		
+            cp $__tool_directory__/single_extract.sh . &&
+            ln -s $database ./database.sdf &&
+            echo $num > list.txt &&
+            bash single_extract.sh &&
+            cp Extracted.sdf $sdf_out
+    ]]></command>
+    <inputs>
+       <param name="database" type="data" label="Database"/>
+       <param name="num" type="text" label="Name of molecule to extract"/>
+    </inputs>
+    <outputs>
+        <data name="sdf_out" format="sdf"/>
+    </outputs>
+    <tests>
+    </tests>
+    <help><![CDATA[
+        .. class:: infomark
+
+**What this tool does:**
+
+Extracts a single moleule by name from an sdf file containing multiple molecules.
+
+
+         .. class:: infomark
+	
+         **Inputs:**
+     
+         * SDF file containing multiple molecules
+
+         * Name of moleucle to extract 
+	
+	.. class:: infomark
+	
+	**Outputs:**
+
+	* SDF file containing extracted molecule
+        
+    ]]></help>
+    <citations>
+    </citations>
+</tool>
