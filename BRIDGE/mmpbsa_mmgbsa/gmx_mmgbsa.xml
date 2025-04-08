@@ -1,0 +1,186 @@
+<tool id="gmx_mmgbsa" name="GMX_MMGBSA" version="@TOOL_VERSION@+galaxy@GALAXY_VERSION@">
+    <description>tool for estimating ligand binding affinities from Gromacs inputs</description>        
+    <requirement type="package" version="1.6.1">gmxMMPBSA</requirement>
+    <command detect_errors="exit_code"><![CDATA[
+        ln -s '$input.complex_structure' ./input.gro &&
+        ln -s '$input.traj' ./traj.xtc &&
+        ln -s '$input.top' ./complex.top &&
+        cp -r $__tool_directory__/amber14sb_OL15.ff . &&
+        cp -r $__tool_directory__/charmm36-jul2022.ff . &&
+        export AMBERHOME='/cchem/galaxy/var/dependencies/_conda/envs/__gmxMMPBSA@1.6.1/' &&
+        export PATH='PATH:/cchem/galaxy/var/dependencies/_conda/envs/__gmxMMPBSA@1.6.1/bin:/bin' &&
+        /cchem/galaxy/var/dependencies/_conda/envs/__python@3.7/bin/python '$mmpbsa_script' '$inputs' &&
+        /cchem/galaxy/local_tools/VMD/bin/vmd -dispdev text -e '$__tool_directory__/convert.tcl' &>> $log &&
+        (echo q) | /cchem/galaxy/var/dependencies/_conda/envs/__gmxMMPBSA@1.6.1/bin/gmx make_ndx -f complex.pdb -o index.ndx &>> $log &&
+        /cchem/galaxy/var/dependencies/_conda/envs/__gmxMMPBSA@1.6.1/bin/gmx_MMPBSA -i '$parameteroutfile' -cs complex.pdb  -ci index.ndx -cg 1 13 -ct traj.xtc -cp complex.top -o '$resultoutfile' -do '$decompoutfile' -nogui &>> $log
+    ]]></command>
+    <configfiles>
+        <inputs name="inputs"/>
+        <configfile name="mmpbsa_script"><![CDATA[
+import os
+import sys
+import json
+
+from jinja2 import Environment, FileSystemLoader
+
+input_json_path = sys.argv[1]
+params = json.load(open(input_json_path, "r"))
+
+
+currentpath = "$__tool_directory__"  # should work generally
+template_environment = Environment(loader=FileSystemLoader(currentpath),lstrip_blocks=True, trim_blocks=True)
+template = template_environment.get_template('template_mmpbsa_mmgbsa.j2')
+print(params)
+
+with open("$parameteroutfile",'w+') as f:
+    f.write(template.render(params))
+
+
+        ]]></configfile>
+
+
+    </configfiles>
+    <inputs>
+        <section name="input" title="Input" expanded="true">
+            <param format="gro" name="complex_structure" type="data" label="Solvated complex coorindates (.gro)"/>
+            <param format="top" name="top" type="data" label="Solvated complex topology (.top)"/>
+            <param format="xtc" name="traj" type="data" label="Trajectory (.xtc)" help="Trajectory of the solvated complex"/>
+        </section>
+        <section name="allparams" title="General parameters" expanded="true">
+            <param name="startframe" type="integer" value="1" label="First frame to analyse" min="1" max="100000000"/>
+            <param name="endframe" type="integer" value="9999999" label="Final frame to analyse" min="1" max="100000000"/>
+            <param name="interval" type="integer" value="1" label="Interval between frames analyzed" min="1" max="10000"/>
+            <param name="entropy" type="boolean" checked="false" truevalue="1" falsevalue="0" label="Perform quasi-harmonic entropy calculation?" help="Calculate the quasi-harmonic entropy"/>
+            <param name="use_sander" type="boolean" checked="false" label="Use sander" truevalue="1" falsevalue="0" help="Forces MMPBSA.py to use sander for energy calculations, even when mmpbsa_py_energy will suffice. Default behavior is to use mmpbsa_py_energy where possible."/>
+            <param name="keep_files" type="boolean" checked="false" truevalue="1" falsevalue="0" label="Keep additional files?" help="If specified, temporary files will be kept and stored in a collection, which may be helpful for debugging."/>
+         </section>
+        <section name="calcdetails" title="Details of calculation and parameters" expanded="true">
+            <conditional name="gb_pb_calc">
+                <param name="calctype" type="select" label="GB or PB calculation?" help="Calculate the electrostatic contribution to the free energy with the Poisson-Boltzmann equation or the General Born approximation">
+                    <option selected="True" value="gb">General Born (GB)</option>
+                    <option value="pb">Poisson-Boltzmann (PB)</option>
+                </param>
+                <when value="gb">
+                    <param name="igb" type="select" value="5" label="GB model to use (igb)" help="5 options are available. Consult the AmberTools manual for more details. Note that some missing values (e.g. 3 and 4) are no longer supported.">
+                        <!-- <option value="0">0 - no generalized Born term is used</option> -->
+                        <option value="1">1 - Basic pairwise generalized Born model</option>
+                        <option value="2">2 - OBC model</option>
+                        <option value="5" selected="True">5 - alternative OBC model</option>
+                        <option value="7">7 - GBn model</option>
+                        <option value="8">8 - alternative GBn model</option>
+                    </param>
+                    <param name="saltcon" type="float" value="0.15" label="Salt concentration (M)" min="0.0" max="6.0"/>
+<param name="surfoff" type="float" value="0" label="Offset to correct (by addition) the value of the non-polar contribution to the solvation free energy term"/>
+                    <!-- <param name="surften" type="float" value="0.0072" label="Surface tension">
+                        <help><![CDATA[Surface tension in kcal / mol / Å<sup>2</sup>]]></help>
+                    </param> -->
+                    <param name="molsurf" type="boolean" checked="false" truevalue="1" falsevalue="0" label="Use the molsurf algorithm to calculate the surface area for the nonpolar solvation term?" help="The default behavior is to use LCPO (Linear Combination of Pairwise Overlaps)."/>
+                    <param name="probe" type="float" value="1.4" label="Radius of the probe molecule (supposed to be the size of a solvent molecule), in Å, to use when determining the molecular surface" help="Only applicable when the molsurf algorithm is selected." min="0"/>
+                    <param name="msoffset" type="float" value="0" label="Offset to apply to the individual atomic radii in the system when calculating the molsurf surface." />
+
+                </when>
+                <when value="pb">
+                    <param name="istrng" type="float" value="0.15" label="Ionic strength (M)" min="0.0" max="2.0"/>
+                    <param name="fillratio" type="float" value="4.0" label="Fill ratio" help="The ratio between the longest dimension of the rectangular finite-difference grid and that of the solute" min="0.0" max="10.0"/>
+                    <param name="inp" type="integer" value="1" label="Nonpolar solvation method" min="1" max="2" help="1 - default"/>
+                    <param name="radiopt" type="integer" value="0" label="Use optimized radii?" min="0" max="2" help="0 - default do not use these"/>
+                    <param name="cavity_offset" type="float" value="-0.5692" label="Offset value used to correct non-polar free energy contribution" help="Not used for APBS"/>
+                    <!-- <param name="cavity_surften" type="float" value="0.0378" label="Surface tension" help="Surface tension in kcal / mol / Å²"/> -->
+                    <param name="exdi" type="float" value="80.0" label="External dielectric constant"/>
+                    <param name="indi" type="float" value="1.0" label="Internal dielectric constant"/>
+                    <param name="scale" type="float" value="2.0" label="Resolution of the Poisson Boltzmann grid" help="Resolution of the Poisson Boltzmann grid, equal to the reciprocal of the grid spacing."/>
+                    <param name="linit" type="integer" value="1000" label="Maximum number of iterations of the linear Poisson Boltzmann equation to try"/>
+                    <param name="prbrad" type="select" label="Solvent probe radius in Å">
+                        <option value="1.4" selected="True">1.4</option>
+                        <option value="1.6">1.6</option>
+                    </param>
+                    <!-- <param name="sander_apbs" type="boolean" truevalue="1" falsevalue="0" label="" help=""/> -->
+                </when>
+            </conditional>
+            <conditional name="decomposition">
+                <param name="decomposition" type="select" label="Carry out decomposition analysis?" help="Choose to carry out decomposition analysis">
+                    <option value="yes">yes</option>
+                    <option value="no" selected="True">no</option>
+                </param>
+                <when value="yes">
+                    <param name="csv_format" type="boolean" checked="true" truevalue="1" falsevalue="0" label="CSV format" help="Output in CSV format; choose false for unformatted text output"/>
+                    <param name="dec_verbose" type="select" value="0" label="Decomposition verbosity" help="Choose verbosity of the decomposition output file. Note that if the verbosity level selected is too high and the parser cannot find the requested information, the job will fail.">
+                        <option value="0">DELTA energy, total contribution only</option>
+                        <option value="1" selected="true">DELTA energy, total, sidechain, and backbone contributions</option>
+                        <option value="2">Complex, Receptor, Ligand, and DELTA energies, total contribution only</option>
+                        <option value="3">Complex, Receptor, Ligand, and DELTA energies, total, sidechain, and backbone contributions</option>
+                    </param>
+                    <param name="idecomp" type="select" value="1" label="Energy decomposition scheme to use" help="Choose an energy decomposition scheme.">
+                        <option value="1">1 - Per-residue decomp with 1-4 terms added to internal potential terms</option>
+                        <option value="2">2 - Per-residue decomp with 1-4 EEL added to EEL and 1-4 VDW added to VDW potential terms.</option>
+                        <option value="3">3 - Pairwise decomp with 1-4 terms added to internal potential terms</option>
+                        <option value="4">4 - Pairwise decomp with 1-4 EEL added to EEL and 1-4 VDW added to VDW potential terms</option>
+                    </param>
+                </when>
+                <when value="no"/>
+            </conditional>
+        </section>
+    </inputs>
+    <outputs>
+        <data format="txt" name="log" label="${tool.name}: Log file"/>
+        <data format="txt" name="resultoutfile" label="${tool.name}: Statistics"/>
+        <data format="txt" name="decompoutfile" label="${tool.name}: Decomposition statistics">
+            <filter>calcdetails['decomposition']['decomposition'] == 'yes'</filter>
+        </data>
+        <data format="txt" name="parameteroutfile" label="${tool.name}: Parameter output"/>
+        <collection name="tempfiles" type="list" label="${tool.name}: Temporary files">
+            <filter>allparams['keep_files'] == 1</filter>
+            <discover_datasets pattern="_MMPBSA(?P&lt;designation&gt;.+)" format="txt"/>
+        </collection>
+    </outputs>
+    <tests>
+    </tests>
+    <help><![CDATA[
+
+.. class:: infomark
+
+**What this tool does:**
+
+This tool uses the gmx_MMPBSA software (based on AmberTools MMPBSA.py) to calculates an estimate of the binding free energy between a ligand and a receptor from Gromacs inputs.
+
+.. class:: infomark
+
+**Inputs:**
+
+- Solvated complex cooridnates (.gro)
+- Solvated complex topology (.top)
+- Trajectory (.xtc)
+
+.. class:: infomark
+
+**Outputs:**
+
+- The statistics file which includes all information about the frames analysed and average energies. The DELTA G binding is estimated. If negative this is a favourable binding. Note that by default the entropy contribution to binding (unfavourable) is not calculated. A normal mode analysis is needed.
+- The parameter file contains the input parameters passed from Galaxy to MMPBSA.py in the expected MMPBSA input format.
+- A detailed log file
+- (Optional, if decomposition analysis is performed) The decomposition file contains a breakdown of each residue's contribution to the energy. For example, using the default energy decomposition scheme (1) the interaction of each residue with the rest of the system is calculated and listed.
+- (Optional, if the "Keep additional files?" option is chosen) A collection containing all temporary files generated in the course of the calculation. This may be useful for debugging.
+
+
+    ]]></help>
+    <citations>
+      <citation type="bibtex">
+@article{doi:10.1021/acs.jctc.1c00645,
+author = {Vald{\'e}s-Tresanco, Mario S. and Vald{\'e}s-Tresanco, Mario E. and Valiente, Pedro A. and Moreno, Ernesto},
+title = {gmx\_MMPBSA: A New Tool to Perform End-State Free Energy Calculations with GROMACS},
+journal = {Journal of Chemical Theory and Computation},
+volume = {17},
+number = {10},
+pages = {6281-6291},
+year = {2021},
+doi = {10.1021/acs.jctc.1c00645},
+    note ={PMID: 34586825},
+URL = {https://doi.org/10.1021/acs.jctc.1c00645},
+eprint = {https://doi.org/10.1021/acs.jctc.1c00645}
+}
+      </citation>
+    </citations>
+    <expand macro="citations">
+        <expand macro="mmpbsa_citation"/>
+    </expand>
+</tool>
