@@ -1,30 +1,86 @@
-  <section id="setup" name="System Setup">
-    <tool file="bridge/md_tools/CHARMM/SYSTEM_SETUP/setup.xml" />
-  </section>
-  <section id="pbcmd" name="Periodic Boundary Molecular Dynamics">
-    <tool file="bridge/md_tools/CHARMM/MINIMIZE/minimizer.xml" />
-    <tool file="bridge/md_tools/CHARMM/CHARMM_NVT/charmm_nvt.xml" />
-    <tool file="bridge/md_tools/CHARMM/CHARMM_NPT/charmm_npt.xml" />
-    <tool file="bridge/md_tools/NAMD/NAMD_NVT/namd_nvt.xml" />
-    <tool file="bridge/md_tools/NAMD/NAMD_NPT/namd_npt.xml" />
-  </section>
-  <section id="sbmd" name="Stochastic Boundary Molecular Dynamics">
-    <tool file="bridge/md_tools/CHARMM/SOLVATE_IN_SPHERE/solvate_sphere.xml" />
-    <tool file="bridge/md_tools/CHARMM/SBMD/sbmd.xml" />
-  </section>
-  <section id="analysis" name="Trajectory Analysis">
-    <tool file="bridge/analysis_tools/MDTraj/trajectory_converter.xml" />
-    <tool file="bridge/analysis_tools/MDAnalysis/hbonds.xml" /> 
-    <tool file="bridge/analysis_tools/MDAnalysis/ramachandran.xml" />  
-    <tool file="bridge/analysis_tools/MDAnalysis/pca_cosine.xml" />
-    <tool file="bridge/analysis_tools/Bio3D/visualize_pc.xml" /> 
-    <tool file="bridge/analysis_tools/Bio3D/dccm.xml" />
-  </section>
-  <section id="free_energy" name="Free Energy Tools">
-    <tool file="bridge/free_energy_tools/alchemical_setup/alchemical_setup.xml" />
-    <tool file="bridge/free_energy_tools/alchemical_run/gmx_fep.xml" /> 
-    <tool file="bridge/free_energy_tools/alchemical_analysis/alchemical_analysis.xml" /> 
-    <tool file="bridge/free_energy_tools/yank/absolute_binding.xml" />
-    <tool file="bridge/free_energy_tools/yank/absolute_solvation.xml" />
-    <tool file="bridge/free_energy_tools/yank/yank_analysis.xml" />
-  </section>
+<section id="docking_screening" name="Docking and Screening Tools">
+<label id="esp" text="Screening" />
+<tool file="bridge/espsim/esp_tool1.xml"/>
+
+<label id="docking" text="Docking" />
+<tool file="bridge/autodock-gpu/prepare_ligand.xml"/>
+<tool file="bridge/autodock-gpu/prepare_receptor.xml"/>
+<tool file="bridge/autodock-gpu/run_docking.xml"/>
+<tool file="bridge/autodock-gpu/pose_extract.xml"/>
+<tool file="bridge/espsim/esp_extract.xml"/>
+<tool file="bridge/vina-cpu/vina_dock.xml"/>
+</section>
+
+<section id="md" name="Molecular Dynamics (MD)">
+<label id="charmm" text="CHARMM" />
+<tool file="bridge/md_tools/CHARMM/SYSTEM_SETUP/setup.xml" />
+<tool file="bridge/md_tools/CHARMM/MINIMIZE/minimizer.xml" />
+<tool file="bridge/md_tools/CHARMM/CHARMM_NVT/charmm_nvt.xml" />
+<tool file="bridge/md_tools/CHARMM/CHARMM_NPT/charmm_npt.xml" />
+<tool file="bridge/md_tools/CHARMM/SOLVATE_IN_SPHERE/solvate_sphere.xml" />
+<tool file="bridge/md_tools/CHARMM/SBMD/sbmd.xml" />
+
+<label id="namd" text="NAMD" />
+<tool file="bridge/namd_run/namd_nvt.xml"/>
+<tool file="bridge/namd_run/namd_npt.xml"/>
+
+<label id="amber" text="AMBERTOOLS"/>
+<tool file="bridge/ambertools/antechamber.xml"/>
+<tool file="bridge/ambertools/amber2gmx.xml"/>
+<tool file="bridge/ambertools/gmx2amber.xml"/>
+<tool file="bridge/ambertools/parmconv.xml"/>
+<tool file="bridge/mdfileconverter/md_converter.xml"/>
+
+<label id="gmx" text="GROMACS" />
+<tool file="bridge/gromacs/full_setup.xml"/>
+<tool file="bridge/gromacs/minim.xml"/>
+<tool file="bridge/gromacs/sim.xml"/>
+<tool file="bridge/gromacs/setup.xml"/>
+<tool file="bridge/gromacs/editconf.xml"/>
+<tool file="bridge/gromacs/makendx.xml"/>
+<tool file="bridge/gromacs/restraints.xml"/>
+<tool file="bridge/gromacs/merge_top.xml"/>
+<tool file="bridge/gromacs/solvate.xml"/>
+<tool file="bridge/gromacs/trj.xml"/>
+</section>
+
+<section id="md_analysis" name="MD Analysis">
+<label id="mda" text="MDAnalysis" />
+<tool file="bridge/mdanalysis_angle/angle.xml"/>
+<tool file="bridge/mdanalysis_cosine_analysis/pca_cosine.xml"/>
+<tool file="bridge/mdanalysis_dihedral/dihedrals.xml"/>
+<tool file="bridge/mdanalysis_distance/distance.xml"/>
+<tool file="bridge/mdanalysis_hbonds/hbonds.xml"/>
+<tool file="bridge/mdanalysis_ramachandran_plot/ramachandran_plots.xml"/>
+<tool file="bridge/mdanalysis_rdf/rdf.xml"/>
+<label id="bio3d" text="Bio3D" />
+<tool file="bridge/bio3d_dccm/dccm.xml"/>
+<tool file="bridge/bio3d_pca/pca.xml"/>
+<tool file="bridge/bio3d_pca_visualize/visualize_pc.xml"/>
+<tool file="bridge/bio3d_rmsd/rmsd.xml"/>
+<tool file="bbridge/io3d_rmsf/rmsf.xml"/>
+<label id="amber" text="Ambertools" />
+<tool file="bridge/mmpbsa_mmgbsa/mmpbsa_mmgbsa.xml"/>
+<label id="gmx" text="Gromacs Analysis"/>
+<tool file="bridge/gromacs/energy.xml"/>
+<tool file="bridge/gromacs/gyrate.xml"/>
+<tool file="bridge/mmpbsa_mmgbsa/gmx_mmgbsa.xml"/>
+<label id="vmd" text="VMD" />
+<tool file="bridge/vmd_analysis/hbond.xml"/>
+</section>
+
+<section id="free_energy" name="Free Energy Tools">
+<label id="abfe" text="Absolute Binding Free Energy" />
+<tool file="bridge/free_energy_tools/bfee_gen_inputs/bfee_input_gen.xml" />
+<tool file="bridge/free_energy_tools/bfee_run/bfee_run.xml" />
+<tool file="bridge/free_energy_tools/bfee_analysis/bfee_posttreatment.xml" />
+<tool file="bridge/free_energy_tools/yank/absolute_binding.xml" />
+<tool file="bridge/free_energy_tools/yank/absolute_solvation.xml" />
+<tool file="bridge/free_energy_tools/yank/yank_analysis.xml" />
+<label id="rbfe" text="Relative Binding Free Energy" />
+<tool file="bridge/free_energy_tools/alchemical_setup/alchemical_setup.xml" />
+<tool file="bridge/free_energy_tools/alchemical_run/gmx_fep.xml" /> 
+<tool file="bridge/free_energy_tools/alchemical_analysis/alchemical_analysis.xml" /> 
+</section>
+  
+
