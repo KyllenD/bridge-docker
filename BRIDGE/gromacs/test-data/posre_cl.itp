@@ -1,0 +1,5 @@
+
+[ position_restraints ]
+;  i funct       fcx        fcy        fcz
+  93    1        500        600        700
+  94    1        500        600        700

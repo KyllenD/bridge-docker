@@ -1,0 +1,83 @@
+<tool id="gmx_merge_topology_files" name="Merge GROMACS topologies" version="@TOOL_VERSION@+galaxy@GALAXY_VERSION@">
+    <description>and GRO files</description>
+    <macros>
+        <token name="@TOOL_VERSION@">3.4.3</token>
+        <token name="@GALAXY_VERSION@">0</token>
+    </macros>
+    <requirements>
+        <requirement type="package" version="@TOOL_VERSION@">parmed</requirement>
+    </requirements>
+    <command detect_errors="exit_code"><![CDATA[
+        python '$__tool_directory__/merge_top.py' 
+            --lig-top $lig_top
+            --prot-top $prot_top
+            --lig-gro $lig_gro
+            --prot-gro $prot_gro
+            --complex-top complex.top
+            --complex-gro complex.gro
+    ]]></command>
+    <inputs>
+        <param name="prot_top" type="data" format='top' label="Protein topology (TOP) file" help="Protein topology into which a ligand topology will be added."/>
+        <param name="lig_top" type="data" format='top,itp' label="Ligand topology (TOP or ITP) file" help="Ligand topology for insertion into the protein topology. Either TOP or ITP format."/>
+        <param name="prot_gro" type="data" format='gro' label="Protein structure (GRO) file" help="Protein structure in GRO format."/>
+        <param name="lig_gro" type="data" format='gro' label="Ligand structure (GRO) file" help="Ligand structure in GRO format."/>
+    </inputs>
+    <outputs>
+        <data name="complex_top" format="top" from_work_dir="complex.top"/>
+        <data name="complex_gro" format="gro" from_work_dir="complex.gro"/>
+    </outputs>
+    <tests>
+        <test>
+            <param name="prot_top" value="topol.top" />
+            <param name="lig_top" value="lig.itp" />
+            <param name="prot_gro" value="newbox.gro" />
+            <param name="lig_gro" value="lig.gro" />
+            <output name="complex_top" file="complex.top" ftype="top" compare="diff" lines_diff="20"/>
+            <output name="complex_gro" file="complex.gro" ftype="gro"/>
+        </test>
+    </tests>
+    <help><![CDATA[
+
+.. class:: infomark
+
+**What it does**
+
+This tool merges GROMACS topologies and structure (GRO) files, calculated separately for a protein and ligand, into combined topology and GRO files for the resulting complex.
+
+The tool will work best if used with the outputs of the 'acpype' and 'GROMACS initial setup' tools. If the input files are formatted unusually or incorrectly, it will probably fail.
+
+_____
+
+.. class:: infomark
+
+**Input**
+
+       - TOP file for the protein topology
+       - A TOP or ITP file for the ligand topology
+       - GRO file for the protein structure
+       - GRO file for the ligand structure
+
+_____
+
+        
+.. class:: infomark
+
+**Output**
+
+       - TOP file for the protein-ligand complex.
+       - GRO file for the protein-ligand complex.
+
+    ]]></help>
+    <citations>
+        <citation type="bibtex">
+@misc{parmed_2020,
+author = {Jason Swails and other contributors},
+title = {ParmEd},
+url={https://github.com/ParmEd/ParmEd},
+abstract = {Parameter/topology editor and molecular simulator.},
+urldate = {2020-04-03},
+publisher = {GitHub},
+year = {2020},
+month = mar, }</citation>
+    </citations>
+</tool>

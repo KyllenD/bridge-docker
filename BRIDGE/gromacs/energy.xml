@@ -1,0 +1,131 @@
+<tool id="gmx_energy" name="Extract energy components with GROMACS" version="@TOOL_VERSION@+galaxy@GALAXY_VERSION@">
+    <macros>
+        <import>macros.xml</import>
+        <token name="@GALAXY_VERSION@">1</token>
+    </macros>
+
+    <expand macro="requirements" />
+
+    <command detect_errors="exit_code"><![CDATA[
+        export gmx='/galaxy-central/tools/bridge/md_tools/bin/gmx' &&
+        ln -s '$edr_input' ./edr_input.edr &&
+        echo -e '#echo str($terms).replace(',', '\\n')#'
+        | gmx energy -f ./edr_input.edr -o ./energy.xvg >> verbose.txt 2>&1
+        #if $fmt == 'tabular':
+            &&
+            grep '@\|#' energy.xvg &&
+            grep -v '@\|#' energy.xvg | sed 's/[[:space:]]*//' | sed  's/  /\t/g' > energy.tabular
+        #end if
+
+    ]]></command>
+
+    <inputs>
+        <param argument="edr_input" type="data" format="edr" label="EDR file" help="GROMACS energy binary file"/>
+        <param argument="terms" type='select' label="Terms to calculate" multiple="true" help="Select terms for which values should be calculated.">
+            <option value="Angle">Angle</option>
+            <option value="Proper-Dih.">Proper dihedrals</option>
+            <option value="Ryckaert-Bell.">Ryckaert-Bellemans dihedrals</option>
+            <option value="LJ-14">Lennard-Jones (1-4 interactions)</option>
+            <option value="Coulomb-14">Coulomb (1-4 interactions)</option>
+            <option value="LJ-(SR)">Lennard-Jones energies (short range)</option>
+            <option value="Disper.-corr.">Dispersion correction</option>
+            <option value="Coulomb-(SR)">Coulomb (short range)</option>
+            <option value="Coul.-recip.">Reciprocal Coulomb energy</option>
+            <option value="Potential" selected="True">Potential energy</option>
+            <option value="Kinetic-En.">Kinetic energy</option>
+            <option value="Conserved-En.">Conserved energy</option>
+            <option value="Total-Energy">Total energy</option>
+            <option value="Temperature">Temperature</option>
+            <option value="Pres.-DC">Pressure DC</option>
+            <option value="Pressure">Pressure</option>
+            <option value="Constr.-rmsd">Constr. RMSD</option>
+            <option value="Box-X">Box-X</option>
+            <option value="Box-Y">Box-Y</option>
+            <option value="Box-Z">Box-Z</option>
+            <option value="Volume">Volume</option>
+            <option value="Density">Density</option>
+            <option value="pV">pV</option>
+            <option value="Enthalpy">Enthalpy</option>
+            <option value="Vir-XX">Virial(XX)</option>
+            <option value="Vir-XY">Virial(XY)</option>
+            <option value="Vir-XZ">Virial(XZ)</option>
+            <option value="Vir-YX">Virial(YX)</option>
+            <option value="Vir-YY">Virial(YY)</option>
+            <option value="Vir-YZ">Virial(YZ)</option>
+            <option value="Vir-ZX">Virial(ZX)</option>
+            <option value="Vir-ZY">Virial(ZY)</option>
+            <option value="Vir-ZZ">Virial(ZZ)</option>
+            <option value="Pres-XX">Pressure(XX)</option>
+            <option value="Pres-XY">Pressure(XY)</option>
+            <option value="Pres-XZ">Pressure(XZ)</option>
+            <option value="Pres-YX">Pressure(YX)</option>
+            <option value="Pres-YY">Pressure(YY)</option>
+            <option value="Pres-YZ">Pressure(YZ)</option>
+            <option value="Pres-ZX">Pressure(ZX)</option>
+            <option value="Pres-ZY">Pressure(ZY)</option>
+            <option value="Pres-ZZ">Pressure(ZZ)</option>
+            <option value="#Surf*SurfTen">Surface tension</option>
+            <option value="Box-Vel-XX">Box-Vel-XX</option>
+            <option value="Box-Vel-YY">Box-Vel-YY</option>
+            <option value="Box-Vel-ZZ">Box-Vel-ZZ</option>
+            <option value="T-Protein">Protein temperature</option>
+            <option value="T-non-Protein">Non-protein temperature</option>
+            <option value="Lamb-Protein">Protein lambda values</option>
+            <option value="Lamb-non-Protein">Non-protein lambda values</option>
+        </param>
+        <param argument="fmt" type='select' label="Output format" help="Format for output; either standard GROMACS XVG, or Galaxy tabular file.">
+            <option value="xvg">GROMACS XVG format</option>
+            <option value="tabular" selected="true">Galaxy tabular</option>
+        </param>
+        <expand macro="xvg_or_tab" />
+        <expand macro="log" />
+
+    </inputs>
+    <outputs>
+        <expand macro="xvg_or_tab_outputs" name="energy" label="GROMACS energy components on ${on_string}"/>
+        <expand macro="log_outputs" />
+    </outputs>
+    <tests>
+        <test>
+            <param name="edr_input" value="outp.edr" />
+            <param name="terms" value="Potential,Total-Energy,Conserved-En." />
+            <param name="fmt" value="xvg" />
+            <output name="output1" file="outp.xvg" ftype="xvg" lines_diff="12"/>
+        </test>
+        <test>
+            <param name="edr_input" value="outp.edr" />
+            <param name="terms" value="Coul.-recip.,Kinetic-En.,Total-Energy" />
+            <param name="fmt" value="tabular" />
+            <output name="output1" file="outp.tabular" ftype="tabular"/>
+        </test>
+    </tests>
+    <help><![CDATA[
+
+.. class:: infomark
+
+**What it does**
+
+This tool extracts energy components from an energy (EDR) binary file. A list of terms to select is provided.
+
+_____
+
+.. class:: infomark
+
+**Input**
+
+       - EDR binary file.
+       - Selection of terms to extract.
+     
+_____
+
+        
+.. class:: infomark
+
+**Output**
+
+       - Tabular or XVG file containing selected terms and some header lines
+
+    ]]></help>
+
+    <expand macro="citations" />
+</tool>
