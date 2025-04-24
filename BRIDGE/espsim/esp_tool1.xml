@@ -7,57 +7,129 @@
     <requirements>
 	<requirement type="package" version="0.0.1">espsim</requirement>
     </requirements>
-    <command detect_errors="exit_code"><![CDATA[		
+    <command detect_errors="exit_code"><![CDATA[
+            #if $target_mol.ext != 'sdf':
+              obabel -i'$target_mol.ext' '$target_mol' -osdf -O target.sdf &&
+            #else:
+              ln -s '$target_mol' target.sdf &&		
+            #end if 
+            
+            #if $test_mol.ext != 'sdf':
+              obabel -i'$test_mol.ext' '$test_mol' -osdf -O query.sdf &&
+            #else:
+              ln -s '$test_mol' query.sdf &&
+            #end if
+
+            #if $align == "fkcombu"
+            cp '$__tool_directory__'/run_fkcombu.sh . &&
+            cp '$__tool_directory__'/no_align.py . &&
+            bash run_fkcombu.sh &&
+            cat target.sdf aligned.sdf > database.sdf &&
+            #if $chrg.chargemethod=='psi4':
+              /cchem/galaxy/var/dependencies/_conda/envs/__espsim@0.0.1/bin/python3.9 '$__tool_directory__'/no_align.py --target database.sdf --metric '$metric' --chargemethod '$chrg.chargemethod' --sort '$sortmethod' --sanitize False --outfile '$Sim_out' --method $chrg.method --basis $chrg.basis_set 2>&1 &&
+            cat *.mol2 > $mol2_out &&
+            #else 
+            /cchem/galaxy/var/dependencies/_conda/envs/__espsim@0.0.1/bin/python3.9 '$__tool_directory__'/no_align.py --target database.sdf --metric '$metric' --chargemethod '$chrg.chargemethod' --sort '$sortmethod' --sanitize False --outfile '$Sim_out' 2>&1 &&
+            #end if
+            #end if
 
             #if $align == "flex"
             cp '$__tool_directory__'/LSalign . &&
             cp '$__tool_directory__'/run_lsalign.py . &&
             cp '$__tool_directory__'/run_lsalign.sh . &&
             cp '$__tool_directory__'/no_align.py . &&
-            ln -s '$target_mol' target.sdf &&
-            ln -s '$test_mol' query.sdf &&
             bash run_lsalign.sh &&
-            cat '$target_mol' aligned.sdf > database.sdf &&
-            python3 '$__tool_directory__'/no_align.py --target database.sdf --metric '$metric' --chargemethod '$chargemethod' --sort '$sortmethod' --sanitize False --outfile '$Sim_out' 2>&1 &&
+            cat target.sdf aligned.sdf > database.sdf &&
+            #if $chrg.chargemethod=='psi4':
+              /cchem/galaxy/var/dependencies/_conda/envs/__espsim@0.0.1/bin/python3.9 '$__tool_directory__'/no_align.py --target database.sdf --metric '$metric' --chargemethod '$chrg.chargemethod' --sort '$sortmethod' --sanitize False --outfile '$Sim_out' --method $chrg.method --basis $chrg.basis_set 2>&1 &&
+            cat *.mol2 > $mol2_out &&
+            #else 
+              /cchem/galaxy/var/dependencies/_conda/envs/__espsim@0.0.1/bin/python3.9 '$__tool_directory__'/no_align.py --target database.sdf --metric '$metric' --chargemethod '$chrg.chargemethod' --sort '$sortmethod' --sanitize False --outfile '$Sim_out' 2>&1 &&
+            #end if
             #end if
 
             #if $align == "rigid_rdkit"
             cat '$target_mol' '$test_mol' > database.sdf &&
-            python3 '$__tool_directory__'/option_5.py --target database.sdf  --metric '$metric' --chargemethod '$chargemethod' --sort '$sortmethod' --sanitize True --outfile '$Sim_out' 2>&1 && 
+            #if $chrg.chargemethod=='psi4':
+              /cchem/galaxy/var/dependencies/_conda/envs/__espsim@0.0.1/bin/python3.9 '$__tool_directory__'/option_5.py --target database.sdf  --metric '$metric' --chargemethod '$chrg.chargemethod' --sort '$sortmethod' --sanitize True --outfile '$Sim_out' --method $chrg.method --basis $chrg.basis_set 2>&1 && 
+              cat *.mol2 > $mol2_out &&
+            #else 
+              /cchem/galaxy/var/dependencies/_conda/envs/__espsim@0.0.1/bin/python3.9 '$__tool_directory__'/option_5.py --target database.sdf  --metric '$metric' --chargemethod '$chrg.chargemethod' --sort '$sortmethod' --sanitize True --outfile '$Sim_out' 2>&1 &&
+            #end if
             #end if 
 
             #if $align == "rigid_ls"
-            ln -s '$target_mol' target.sdf &&
-            ln -s '$test_mol' query.sdf &&
             cp '$__tool_directory__'/no_align.py . &&
             cp '$__tool_directory__'/LSalign . &&
             cp '$__tool_directory__'/run_lsalign_rigid.py . &&
             cp '$__tool_directory__'/run_lsalign_rigid.sh . &&
             bash run_lsalign_rigid.sh &&
-            cat '$target_mol' aligned.sdf > database.sdf && 
-            python3 '$__tool_directory__'/no_align.py --target database.sdf --metric '$metric' --chargemethod '$chargemethod' --sort '$sortmethod' --sanitize False --outfile '$Sim_out' 2>&1 &&
+            cat target.sdf aligned.sdf > database.sdf && 
+            #if $chrg.chargemethod=='psi4':
+              /cchem/galaxy/var/dependencies/_conda/envs/__espsim@0.0.1/bin/python3.9 '$__tool_directory__'/no_align.py --target database.sdf --metric '$metric' --chargemethod '$chrg.chargemethod' --sort '$sortmethod' --sanitize False --outfile '$Sim_out' --method $chrg.method --basis $chrg.basis_set 2>&1 &&
+              cat *.mol2 > $mol2_out &&
+            #else 
+              /cchem/galaxy/var/dependencies/_conda/envs/__espsim@0.0.1/bin/python3.9 '$__tool_directory__'/no_align.py --target database.sdf --metric '$metric' --chargemethod '$chrg.chargemethod' --sort '$sortmethod' --sanitize False --outfile '$Sim_out' 2>&1 &&
             #end if
+            #end if
+            
+            #if $align == "none"
+            cp '$__tool_directory__'/no_align.py . &&
+            cat target.sdf query.sdf > database.sdf &&
+            #if $chrg.chargemethod=='psi4':
+              /cchem/galaxy/var/dependencies/_conda/envs/__espsim@0.0.1/bin/python3.9 '$__tool_directory__'/no_align.py --target database.sdf --metric '$metric' --chargemethod '$chrg.chargemethod' --sort '$sortmethod' --sanitize False --outfile '$Sim_out' --method $chrg.method --basis $chrg.basis_set 2>&1 &&
+              cat *.mol2 > $mol2_out &&
+            #else
+              /cchem/galaxy/var/dependencies/_conda/envs/__espsim@0.0.1/bin/python3.9 '$__tool_directory__'/no_align.py --target database.sdf --metric '$metric' --chargemethod '$chrg.chargemethod' --sort '$sortmethod' --sanitize False --outfile '$Sim_out' 2>&1 &&
+            #end if
+            #end if
+
 
             cp sorted.csv '$Sim_out' &&
             cp $__tool_directory__/list.sh . &&
             cp $__tool_directory__/extract_sdf_by_name.py . &&
-            #if $extraction.extract=="yes"
-            bash list.sh $extraction.num &&
-            python3 extract_sdf_by_name.py --database database.sdf --output $sdf_out 
-            #else 
-            touch Extracted.sdf &&
-            cp Extracted.sdf '$sdf_out'
+            #if $extraction.extract=="yes":
+              bash list.sh $extraction.num &&
+              /cchem/galaxy/var/dependencies/_conda/envs/__espsim@0.0.1/bin/python3.9 extract_sdf_by_name.py --database database.sdf --output $sdf_out
+            #end if 
+            #if $extraction.extract=="cutoff":
+              cp '$__tool_directory__'/cutoff_filter.sh . && 
+              bash cutoff_filter.sh $extraction.num  $extraction.num2 &&
+              /cchem/galaxy/var/dependencies/_conda/envs/__espsim@0.0.1/bin/python3.9 extract_sdf_by_name.py --database database.sdf --output $sdf_out 
+            #end if 
+            #if $extraction.extract=="no":
+              touch Extracted.sdf &&
+              cp Extracted.sdf '$sdf_out'
             #end if
  
     ]]></command>
     <inputs>
-       <param name="target_mol" type="data" format="sdf" label="Target"/>
-       <param name="test_mol" type="data" format="sdf" label="Query molecule / database"/> 
+       <param name="target_mol" type="data" format="sdf,pdb,mol2" label="Target"/>
+       <param name="test_mol" type="data" format="sdf,pdb,mol2" label="Query molecule / database"/>
+       <conditional name='chrg'> 
        <param name="chargemethod" type="select" label="Charge method">
                 <option value="espaloma">EspalomaCharge</option>
                 <option value="gasteiger">Gasteiger</option>
                 <option value="mmff">MMFF94</option>
+                <option value="psi4">RESP</option>
              </param>
+      <when value="psi4">
+      <param name="method" type="select" label="QM method">
+        <option value="scf">SCF</option>
+        <option value="mp2">MP2</option>
+        <option value="hf">HF</option>
+        <option value="b3lyp">B3LYP</option>
+      </param>
+      <param name="basis_set" type="select" label="QM Basis Set">
+        <option value="sto-3g">STO-3G</option>
+        <option value="3-21g">3-21G</option>
+        <option value="6-31g*">6-31G*</option>
+        <option value="6-31g**">6-31G**</option>
+        <option value="aug-cc-pVTZ">aug-cc-pVTZ</option>
+      </param>
+      </when>
+
+   </conditional>
        <param name="metric" type="select" label="Similarity metric">
 		<option value="tanimoto">Tanimoto</option>
 		<option value="carbo">Carbo</option>
@@ -66,10 +138,8 @@
                 <option value="rigid_rdkit">Rigid (RDKit Crippen Alignment)</option>
                 <option value="rigid_ls">Rigid (LS-Align)</option>
                 <option value="flex">Flexible (LS-Align)</option>
-            </param>
-       <param name="sanitize" type="select" label="Minimize input structures?">
-                <option value="True">Yes</option>
-                <option value="False">No</option>
+                <option value="fkcombu">Flexible (FKCOMBU)</option>
+                <option value="none">No alignment</option>
             </param>
        <param name="sortmethod" type="select" label="Sort output by">
                 <option value="ESP*Shape">ESP*Shape similarity</option>
@@ -78,17 +148,27 @@
             </param>
        <conditional name="extraction">
             <param type="select" name="extract" label="Extract top molecues?">
-          <option value="yes">Yes</option>
-          <option value="no">No</option>
+          <option value="yes">Extract by rank</option>
+          <option value="cutoff">Extract by similarity cutoff value</option>
+          <option value="no">No extraction </option>
             </param>
            <when value="yes">
             <param name="num" type="text" label="Number of top hits to extract" value="10"/>
+            </when>
+           <when value="cutoff">
+            <param name="num" type="text" label="ESP similarity cutoff value" value="0.25"/>
+            <param name="num2" type="text" label="Shape similarity cutoff value" value="0.25"/>
             </when>
           </conditional>
     </inputs>
     <outputs>
         <data name="Sim_out" format="csv" label="ESP-Shape similarity screening results"/>
-        <data name="sdf_out" format="sdf" label="SDF output of ESP-Shape similarity search"/>
+        <data name="sdf_out" format="sdf" label="SDF output of ESP-Shape similarity search">
+        <filter>extraction['extract'] != 'no'</filter>
+        </data>
+        <data name="mol2_out" format="mol2" label="PSI4 Mol2 output">
+          <filter>chrg['chargemethod'] == 'psi4'</filter>
+        </data>
     </outputs>
     <tests>
     </tests>
@@ -97,7 +177,7 @@
 
         **What this tool does:**
 
-        Calculates ESP and 3D shape similarity between two molecules. Queries are aligned to the target using the Open3DAlign function of RDKit, aligning molecules based on their partition coefficient (log P) and molar refractivity (MR). The Shape similarity is then determined by the overlap of the vdW radii. For ESP similarity, partial charges of both moelcules are calculated by the selcted method and compared using either the Tanimoto or Carbo metrices. Alignment of the query to the target can be flexible or rigid. Rigid alignment uses the Open3DAlign function of RDKit, aligning molecules based on their partition coefficient (log P) and molar refractivity (MR). Flexible alignment is carried out using LS-Align.
+        Calculates ESP and 3D shape similarity between two molecules. Queries are aligned to the target using the Open3DAlign function of RDKit, aligning molecules based on their partition coefficient (log P) and molar refractivity (MR). The Shape similarity is then determined by the overlap of the vdW radii. For ESP similarity, partial charges of both molecules are calculated by the selected method and compared using either the Tanimoto or Carbo metrices. Alignment of the query to the target can be flexible or rigid. Rigid alignment uses the Open3DAlign function of RDKit, aligning molecules based on their partition coefficient (log P) and molar refractivity (MR). Flexible alignment is carried out using LS-Align.
          
          .. class:: infomark
          
@@ -109,11 +189,10 @@
          
          * Charge method - method used to calculate the partial charges used in ESP similarity calculation(Gasteiger/MMFF94/EspalomaCharge)
 
-         * Similartiy metric - metric used to calculate ESP similarity (Tanimoto/Carbo)
+         * Similarity metric - metric used to calculate ESP similarity (Tanimoto/Carbo)
 
          * Alignment method - rigid/ flexible
 
-         * Minimize input structures - choose whether to minimize inputs using RDKit UFF 
  
          * Sort output by - select whether to rank the output molecules based on their ESP,Shape or ESP*Shape similarity to the target 
 
@@ -125,7 +204,7 @@
 
          * A .sdf file containing the top hits as determined by the "Number of top hits to extract" field
 
-         * A .csv file conatining the name of the Query molecule, the ESP similarity, Shape similarity and the product of these similarites (ESP*Shape Similarity).
+         * A .csv file containing the name of the Query molecule, the ESP similarity, Shape similarity and the product of these similarities (ESP*Shape Similarity).
 
         .. class:: infomark
 
